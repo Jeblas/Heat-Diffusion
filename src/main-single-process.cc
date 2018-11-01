@@ -12,16 +12,16 @@ int main(int arc, char *argv[]) {
     std::vector<double> grid(num_grid_points, 0.0);
     if (num_grid_points > 1) {
         for (int i = 0; i < num_timesteps; ++i) {
-	    for (int k = 0; k < num_grid_points; ++k) {
-	        if (k == 0) {
+            for (int k = 0; k < num_grid_points; ++k) {
+                if (k == 0) {
                     grid[k] = (1 - 2 * r) * grid_prev[k] + r * t1_temp + r * grid_prev[k + 1];
-	        } else if (k == num_grid_points - 1) {
-	            grid[k] = (1 - 2 * r) * grid_prev[k] + r * grid_prev[k - 1] + r * t2_temp;
-	        } else {
-	            grid[k] = (1 - 2 * r) * grid_prev[k] + r * grid_prev[k - 1] + r * grid_prev[k + 1];
-	        }
-	    }
-  	    grid_prev = grid;
+                } else if (k == num_grid_points - 1) {
+                    grid[k] = (1 - 2 * r) * grid_prev[k] + r * grid_prev[k - 1] + r * t2_temp;
+                } else {
+                    grid[k] = (1 - 2 * r) * grid_prev[k] + r * grid_prev[k - 1] + r * grid_prev[k + 1];
+                }
+            }
+            grid_prev = grid;
         }
     } else {
         for (int i = 0; i < num_timesteps; ++i) { 
