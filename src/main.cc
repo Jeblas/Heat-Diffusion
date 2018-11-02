@@ -55,17 +55,19 @@ int main(int argc, char **argv) {
                 // Calculate values for each timestep
                 for (int k = 0; k < grid.size(); ++k) {
                     if (MPI_rank == 0) {
-                    // point touching t1_temp
 		        if (k == 0) {
+                            // point touching t1_temp
                             grid[k] = (1 - 2 * r) * grid_prev[k] + r * t1_temp + r * grid_prev[k + 1];
 			} else {
                             grid[k] = (1 - 2 * r) * grid_prev[k] + r * grid_prev[k - 1] + r * grid_prev[k + 1];
 			}
                     } else if (MPI_rank == MPI_num_ranks - 1 && k == grid.size() - 1) {
-                    // point touching t2_temp
-                        grid[k] = (1 - 2 * r) * grid_prev[k + 1] + r * grid_prev[k] + r * t2_temp; //indices for grid and grid_prev are shifted
+                        // point touching t2_temp
+                        grid[k] = (1 - 2 * r) * grid_prev[k + 1] + r * grid_prev[k] + r * t2_temp; 
+			//indices for grid and grid_prev are shifted
                     } else {
-                        grid[k] = (1 - 2 * r) * grid_prev[k + 1] + r * grid_prev[k] + r * grid_prev[k + 2]; // indices for grid and grid_prev are shifted
+                        grid[k] = (1 - 2 * r) * grid_prev[k + 1] + r * grid_prev[k] + r * grid_prev[k + 2]; 
+			// indices for grid and grid_prev are shifted
                     }
                 }
 
@@ -84,11 +86,9 @@ int main(int argc, char **argv) {
                     if (MPI_rank == 0) {
                         MPI_Recv(&grid_prev[grid.size()], 1, MPI_DOUBLE, MPI_rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         MPI_Send(&grid[grid.size() - 1], 1, MPI_DOUBLE, MPI_rank + 1, 0, MPI_COMM_WORLD);
-			//std::cout << "timestep: " << i << " grid : " << grid[0] << " grid_prev: " << grid_prev[0] << ", " << grid_prev[1] << '\n';
                     } else if (MPI_rank == MPI_num_ranks - 1) {
                         MPI_Recv(&grid_prev[0], 1, MPI_DOUBLE, MPI_rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         MPI_Send(&grid[0], 1, MPI_DOUBLE, MPI_rank - 1, 0, MPI_COMM_WORLD);
-			//std::cout << "timestep: " << i << " grid : " << grid[0] << " grid_prev: " << grid_prev[0] << ", " << grid_prev[1] << '\n';
                     } else {
                         MPI_Recv(&grid_prev[grid.size() + 1], 1, MPI_DOUBLE, MPI_rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         MPI_Recv(&grid_prev[0], 1, MPI_DOUBLE, MPI_rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -104,15 +104,8 @@ int main(int argc, char **argv) {
                         MPI_Send(&grid[grid.size() - 1], 1, MPI_DOUBLE, MPI_rank + 1, 0, MPI_COMM_WORLD);
                         MPI_Recv(&grid_prev[0], 1, MPI_DOUBLE, MPI_rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         MPI_Recv(&grid_prev[grid.size() + 1], 1, MPI_DOUBLE, MPI_rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			//std::cout << "timestep: " << i << " grid : " << grid[0] << " grid_prev: " << grid_prev[0] << ", " << grid_prev[1] << ", " << grid_prev[2] << '\n';
                     }
                 }
-
-		//Debug
-		//for (int x = 0; x < grid.size(); ++x) {
-		//    std::cout << grid[x] << " rank = " << MPI_rank << " timestep = " << i << '\n';
-		//}
-		//
             }
         } else {
             // single grid point edge case
@@ -136,13 +129,10 @@ int main(int argc, char **argv) {
                 int recv_size = grid.size();
                 int outputs_index = recv_size;
                 for (int m = 1; m < MPI_num_ranks - 1; ++m) {
-			//std::cout << outputs_index << std::endl;
-			//std::cout << recv_size;
                     MPI_Recv(&outputs[outputs_index], recv_size, MPI_DOUBLE, m, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     outputs_index += recv_size;
                 }
                 // last rank might differ in size
-                // TODO  num_grid_points - outputs_index
                 MPI_Recv(&outputs[outputs_index], num_grid_points - recv_size * (MPI_num_ranks - 1), MPI_DOUBLE, MPI_num_ranks - 1,
                     0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
