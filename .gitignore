@@ -2,4 +2,5 @@
 /src/.*
 /src/singleThreadHT*
 /.DS*
+!/src/*.cc
 /.vscode
