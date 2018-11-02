@@ -17,7 +17,6 @@ int main(int argc, char **argv) {
 
     int MPI_num_ranks;
     MPI_Comm_size(MPI_COMM_WORLD, &MPI_num_ranks);
-    // TODO HANDLE NUM RANKS == 1!!
     int MPI_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &MPI_rank);
     int grid_size;
@@ -34,7 +33,7 @@ int main(int argc, char **argv) {
     if (MPI_rank < MPI_num_ranks) {
     // Divide up grip among the ranks last rank gets remaining grids
     // edge case check
-        if (num_grid_points > 1) {
+        if (MPI_num_ranks > 1) {
             if (MPI_rank != MPI_num_ranks - 1) {
                 grid_size = int(num_grid_points / MPI_num_ranks);
             } else {
@@ -55,19 +54,19 @@ int main(int argc, char **argv) {
                 // Calculate values for each timestep
                 for (int k = 0; k < grid.size(); ++k) {
                     if (MPI_rank == 0) {
-		        if (k == 0) {
+                        if (k == 0) {
                             // point touching t1_temp
                             grid[k] = (1 - 2 * r) * grid_prev[k] + r * t1_temp + r * grid_prev[k + 1];
-			} else {
+                        } else {
                             grid[k] = (1 - 2 * r) * grid_prev[k] + r * grid_prev[k - 1] + r * grid_prev[k + 1];
-			}
+                        }
                     } else if (MPI_rank == MPI_num_ranks - 1 && k == grid.size() - 1) {
                         // point touching t2_temp
+                        //indices for grid and grid_prev are shifted
                         grid[k] = (1 - 2 * r) * grid_prev[k + 1] + r * grid_prev[k] + r * t2_temp; 
-			//indices for grid and grid_prev are shifted
                     } else {
-                        grid[k] = (1 - 2 * r) * grid_prev[k + 1] + r * grid_prev[k] + r * grid_prev[k + 2]; 
-			// indices for grid and grid_prev are shifted
+                        // indices for grid and grid_prev are shifted
+                        grid[k] = (1 - 2 * r) * grid_prev[k + 1] + r * grid_prev[k] + r * grid_prev[k + 2];
                     }
                 }
 
@@ -108,13 +107,30 @@ int main(int argc, char **argv) {
                 }
             }
         } else {
-            // single grid point edge case
-            grid = std::vector<double>(1, 0.0);
+            // Only one process is called or needed
+            grid = std::vector<double>(num_grid_points, 0.0);
             grid_size = grid.size();
-            // TODO steady state after once change to if statement check
-            for (int i = 0; i < num_timesteps; ++i) {
-                grid[0] = (1 - 2 * r) * grid[0] + r * t1_temp + r * t2_temp;
-            }
+
+            if (num_grid_points > 1) {
+                grid_prev = std::vector<double>(num_grid_points, 0.0);
+                for (int i = 0; i < num_timesteps; ++i) {
+                    for (int k = 0; k < num_grid_points; ++k) {
+                        if (k == 0) {
+                            grid[k] = (1 - 2 * r) * grid_prev[k] + r * t1_temp + r * grid_prev[k + 1];
+                        } else if (k == num_grid_points - 1) {
+                            grid[k] = (1 - 2 * r) * grid_prev[k] + r * grid_prev[k - 1] + r * t2_temp;
+                        } else {
+                            grid[k] = (1 - 2 * r) * grid_prev[k] + r * grid_prev[k - 1] + r * grid_prev[k + 1];
+                        }
+                    }
+                    grid_prev = grid;
+                }
+            } else {
+                for (int i = 0; i < num_timesteps; ++i) {
+                    // TODO steady state after once change to if statement check
+                    grid[0] = (1 - 2 * r) * grid[0] + r * t1_temp + r * t2_temp;
+                }
+            }       
         }
         // merge all values into rank 0
         std::vector<double> outputs(num_grid_points);
@@ -124,7 +140,7 @@ int main(int argc, char **argv) {
                 outputs[point_index] = grid[point_index];
             }
 
-            if (num_grid_points > 1) {
+            if (MPI_num_ranks > 1) {
                 // Collect remaining grid points from other ranks
                 int recv_size = grid.size();
                 int outputs_index = recv_size;
