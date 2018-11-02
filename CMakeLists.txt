@@ -9,12 +9,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 
 include_directories(
         src
+	${MPI_INCLUDE_PATH}
 )
 
 set(SOURCE_FILES)
 
-#add_executable(${PROJECT_NAME} ${SOURCE_FILES} src/main.cc)
-add_executable(heat1D ${SOURCE_FILES} src/main.cc)
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} src/main.cc)
+target_link_libraries(${PROJECT_NAME} ${MPI_LIBRARIES})
 
 if(MPI_COMPILE_FLAGS)
     set_target_properties(${PROJECT_NAME} PROPERTIES
