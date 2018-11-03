@@ -25,7 +25,7 @@ int main(int arc, char *argv[]) {
         }
     } else {
         for (int i = 0; i < num_timesteps; ++i) { 
-            grid[0] = (1 - 2 * r) * grid_prev[0] + r * t1_temp + r * t2_temp;
+            grid[0] = (1 - 2 * r) * grid[0] + r * t1_temp + r * t2_temp;
         }
     }
     for (int l = 0; l < num_grid_points - 1; ++l) {
