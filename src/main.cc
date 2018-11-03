@@ -127,7 +127,6 @@ int main(int argc, char **argv) {
                 }
             } else {
                 for (int i = 0; i < num_timesteps; ++i) {
-                    // TODO steady state after once change to if statement check
                     grid[0] = (1 - 2 * r) * grid[0] + r * t1_temp + r * t2_temp;
                 }
             }       
